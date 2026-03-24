@@ -79,28 +79,33 @@
         <thead>
           <tr>
             <th @click="changeSort('qr_number')" style="cursor:pointer;">QR Number <span v-if="currentSortBy === 'qr_number'">{{ sortAsc ? '↑' : '↓' }}</span></th>
+            <th @click="changeSort('scope')" style="cursor:pointer;">Scope <span v-if="currentSortBy === 'scope'">{{ sortAsc ? '↑' : '↓' }}</span></th>
             <th @click="changeSort('title')" style="cursor:pointer;">Title <span v-if="currentSortBy === 'title'">{{ sortAsc ? '↑' : '↓' }}</span></th>
             <th @click="changeSort('qr_status')" style="cursor:pointer;">Status <span v-if="currentSortBy === 'qr_status'">{{ sortAsc ? '↑' : '↓' }}</span></th>
-            <th @click="changeSort('trigger_area')" style="cursor:pointer;">Trigger Area <span v-if="currentSortBy === 'trigger_area'">{{ sortAsc ? '↑' : '↓' }}</span></th>
-            <th @click="changeSort('scope')" style="cursor:pointer;">Scope <span v-if="currentSortBy === 'scope'">{{ sortAsc ? '↑' : '↓' }}</span></th>
-            <th @click="changeSort('trigger_date')" style="cursor:pointer;">Trigger Date <span v-if="currentSortBy === 'trigger_date'">{{ sortAsc ? '↑' : '↓' }}</span></th>
             <th @click="changeSort('qr_owner')" style="cursor:pointer;">Owner <span v-if="currentSortBy === 'qr_owner'">{{ sortAsc ? '↑' : '↓' }}</span></th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="paginatedData.length === 0">
-             <td colspan="8" style="text-align:center;">No match found.</td>
+             <td colspan="6" style="text-align:center;">No match found.</td>
           </tr>
           <tr v-for="item in paginatedData" :key="item.qr_number">
              <td><a :href="'detail.html?id=' + item.qr_number" style="color: var(--primary-color); text-decoration:none; font-weight:600;">#{{ item.qr_number }}</a></td>
+             <td>{{ item.scope }}</td>
              <td>{{ item.title }}</td>
              <td><div class="badge" :class="item.qr_status === 'Completed' ? 'badge-completed' : (item.qr_status === 'Ongoing' ? 'badge-ongoing' : 'badge-failed')">{{ item.qr_status }}</div></td>
-             <td>{{ item.trigger_area }}</td>
-             <td>{{ item.scope }}</td>
-             <td>{{ item.trigger_date }}</td>
-             <td>{{ item.qr_owner }}</td>
-             <td><a :href="'display.html?id=' + item.qr_number" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; background: var(--warning-color); color: #212529; text-decoration:none; border-radius:4px; font-weight:600;">Display</a></td>
+             <td>{{ item.qr_owner || 'N/A' }}</td>
+             <td>
+                 <div style="display:flex; gap: 0.5rem; align-items:center;">
+                    <a :href="'display.html?id=' + item.qr_number" title="View Display Board" style="color: var(--primary-color);">
+                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </a>
+                    <a :href="'detail.html?id=' + item.qr_number" title="View Details" style="color: var(--success-color);">
+                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    </a>
+                 </div>
+             </td>
           </tr>
         </tbody>
       </table>
@@ -151,6 +156,11 @@
           </div>
        </form>
     </div>
+  </div>
+
+  <!-- Lightbox Modal -->
+  <div class="modal" :class="{ active: lightbox.active }" @click="lightbox.active = false">
+     <img class="modal-content" :src="lightbox.url">
   </div>
 
   <script src="js/list.js"></script>

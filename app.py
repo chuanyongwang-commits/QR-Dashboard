@@ -39,6 +39,26 @@ def dict_factory(cursor, row):
 def home():
     return send_from_directory('.', 'index.html')
 
+@app.route('/uploads/<path:filename>')
+def custom_static(filename):
+    return send_from_directory('uploads', filename)
+
+@app.route('/api/upload', methods=['POST'])
+def upload_file_api():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+        
+    if file:
+        os.makedirs('uploads', exist_ok=True)
+        filename = file.filename
+        filepath = os.path.join('uploads', filename)
+        # Handle duplicate filenames securely simply overwriting for now
+        file.save(filepath)
+        return jsonify({"url": f"/uploads/{filename}"})
+
 # API for Dashboard
 @app.route('/api/dashboard')
 def dashboard_api():
@@ -183,6 +203,13 @@ def detail_api(id):
         if row['trigger_date']: row['trigger_date'] = str(row['trigger_date'])
         if row['close_date']: row['close_date'] = str(row['close_date'])
 
+        # Fetch Audit History
+        cursor.execute("SELECT field_name, old_value, new_value, changed_at FROM qr_history WHERE qr_number = %s ORDER BY changed_at ASC", (id,))
+        history = cursor.fetchall()
+        for h in history:
+             h['changed_at'] = str(h['changed_at'])
+        row['history'] = history
+
         return jsonify(row)
     finally:
         cursor.close()
@@ -235,27 +262,37 @@ def update_case_api(id):
         if not data:
              return jsonify({"error": "No data provided"}), 400
 
-        # Build update query dynamically
+        # Fetch original configuration setting
+        cursor.execute("SELECT * FROM qr_cases WHERE qr_number = %s", (id,))
+        current = cursor.fetchone()
+        if not current:
+             return jsonify({"error": "Case not found"}), 404
+
         fields = []
         params = []
-        updatable = ['title', 'qr_status', 'phenomenon', 'action', 'result', 'conclusion']
         
-        for key in updatable:
-             if key in data:
+        # All columns except keys
+        cursor.execute("DESCRIBE qr_cases")
+        columns = [x['Field'] for x in cursor.fetchall()]
+        
+        for key in data.keys():
+             if key in columns and key != 'qr_number':
                   fields.append(f"{key} = %s")
                   params.append(data[key])
+                  
+                  # Log History Diffs
+                  current_val = str(current[key]) if current[key] is not None else ""
+                  new_val = str(data[key]) if data[key] is not None else ""
+                  if current_val != new_val:
+                       cursor.execute("INSERT INTO qr_history (qr_number, field_name, old_value, new_value) VALUES (%s, %s, %s, %s)", (id, key, current_val, new_val))
                   
         if not fields:
              return jsonify({"error": "No valid fields to update"}), 400
              
-        params.append(id) # for WHERE qr_number = %s
-        
+        params.append(id)
         sql = f"UPDATE qr_cases SET {', '.join(fields)} WHERE qr_number = %s"
         cursor.execute(sql, params)
         conn.commit()
-
-        if cursor.rowcount == 0:
-             return jsonify({"error": "No record updated, check if QR number exists"}), 404
 
         return jsonify({"message": "Updated successfully"})
     except Exception as e:

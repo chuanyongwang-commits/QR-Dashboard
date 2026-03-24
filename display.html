@@ -3,109 +3,137 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QR Display - Quick Response Management</title>
+  <title>QR Display Board - Quick Response Management</title>
   <link rel="stylesheet" href="css/style.css">
   <!-- Vue 3 from CDN -->
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <style>
-    /* Absolute mimic of screenshot grids or high density industrial dashboards */
+    /* Mimic industrial dashboard exactly */
     .dashboard-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 1rem;
       padding: 1rem;
-      background: #f4f6f9;
+      background: #e9ecef;
       min-height: 100vh;
     }
     .card-item {
       background: #ffffff;
-      border: 1px solid #dee2e6;
-      border-radius: 4px;
+      border: 1px solid #ced4da;
+      border-radius: 8px;
       display: flex;
       flex-direction: column;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      overflow: hidden;
     }
     .card-item-header {
-      background: #ffe082; /* Yellow header reference */
-      padding: 0.5rem 0.75rem;
+      background: #1b4385; /* Dark blue matching picture 1 */
+      padding: 0.75rem 1rem;
       font-weight: 600;
       font-size: 0.95rem;
-      color: #333;
-      border-bottom: 1px solid #e0b034;
+      color: #ffffff; /* White text */
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
     .card-item-body {
-      padding: 0.75rem;
+      padding: 1rem;
       flex: 1;
-      font-size: 0.875rem;
+      font-size: 0.95rem;
       white-space: pre-line;
       overflow-y: auto;
+      display: flex;
+      flex-direction: column;
     }
     .grid-full-width { grid-column: span 3; }
     .grid-span-2 { grid-column: span 2; }
     
-    /* Table inside Evidence cell layout mirror */
     .inner-table {
-      width: 100%; border-collapse: collapse; font-size: 0.75rem;
+      width: 100%; border-collapse: collapse; font-size: 0.825rem;
     }
     .inner-table th, .inner-table td {
-      padding: 0.35rem; border: 1px solid #dee2e6; text-align: left;
+      padding: 0.5rem; border: 1px solid #dee2e6; text-align: left;
     }
-    .inner-table th { background: #f8f9fa; }
+    .inner-table th { background: #1b4385; color:#fff; }
     
-    /* Pictures layout */
-    .pict-box {
-      border: 1px solid #ffe082; text-align: center; padding: 2rem; color: #0d6efd; font-weight: 600; cursor: pointer;
+    .status-giant {
+      font-size: 2.5rem; font-weight: 800; text-align: center; margin: auto;
     }
+    .status-giant.ongoing { color: #d68500; }
+    .status-giant.completed { color: #198754; }
+    .status-giant.failed { color: #dc3545; }
   </style>
 </head>
-<body id="app" style="display:block;">
+<body id="app" style="display:block; background:#e9ecef;">
 
-  <!-- Simple Navbar instead of Sidebar for Fullscreen feel -->
-  <div style="background: var(--dark-color); color: #fff; padding: 0.75rem 1.5rem; display: flex; justify-content: space-between; align-items:center;">
-    <div style="font-weight: bold; font-size: 1.125rem;">QR Display Board <span v-if="item">#{{ item.qr_number }}</span></div>
-    <a href="list.html" style="color: #fff; text-decoration:none; font-size: 0.875rem;">← Back to List</a>
+  <!-- Navbar -->
+  <div style="background: #112952; color: #fff; padding: 0.85rem 1.5rem; display: flex; justify-content: space-between; align-items:center; border-bottom: 3px solid #0056b3;">
+    <div style="font-weight: bold; font-size: 1.1rem; display:flex; align-items:center; gap:0.4rem; font-family: sans-serif;">
+       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+       <span style="color: #ffd54f;">{{ item.scope || 'N/A' }}</span>
+       <span> _ QR No. {{ item.qr_number }}</span>
+       <span> _ {{ item.title }}</span>
+       <span> _ Owner_ <span style="color: #81d4fa;">{{ item.qr_owner || 'N/A' }}</span></span>
+    </div>
+    <a href="list.html" style="color: #fff; text-decoration:none; font-size: 0.875rem; font-weight:600; display:flex; align-items:center; gap:0.25rem;">
+       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+       Back to List
+    </a>
   </div>
 
-  <div v-if="!item" style="text-align:center; padding: 4rem; font-size: 1.25rem;">Loading Case Details...</div>
+  <div v-if="!item" style="text-align:center; padding: 4rem; font-size: 1.25rem; color: #6c757d;">Loading Case Details...</div>
 
   <div v-if="item" class="dashboard-grid">
     
     <!-- Problem Severity -->
     <div class="card-item">
-      <div class="card-item-header">Problem Severity</div>
+      <div class="card-item-header">
+         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+         Problem Severity
+      </div>
       <div class="card-item-body">{{ item.problem_severity || 'N/A' }}</div>
     </div>
 
     <!-- Good Lead -->
     <div class="card-item">
-      <div class="card-item-header">Good Lead</div>
+      <div class="card-item-header">
+         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+         Good Lead
+      </div>
       <div class="card-item-body">N/A</div>
     </div>
 
     <!-- Action -->
     <div class="card-item">
-      <div class="card-item-header">Action</div>
+      <div class="card-item-header">
+         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+         Action
+      </div>
       <div class="card-item-body">{{ item.action || 'N/A' }}</div>
     </div>
 
     <!-- Target -->
     <div class="card-item">
-      <div class="card-item-header">Target</div>
+      <div class="card-item-header">
+         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+         Target
+      </div>
       <div class="card-item-body">N/A</div>
     </div>
 
-    <!-- Evidence (Grid Span 1) -->
+    <!-- Evidence -->
     <div class="card-item">
-      <div class="card-item-header">Evidence</div>
+      <div class="card-item-header">
+         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+         Evidence
+      </div>
       <div class="card-item-body">
-         <p style="margin-bottom: 0.5rem;">Total Cases Loaded: {{ item.qr_number }}</p>
+         <p style="margin-bottom: 0.5rem; font-weight:bold; color: #495057;">Loaded Case Details:</p>
          <table class="inner-table">
-            <thead>
-               <tr><th>Field</th><th>Value</th></tr>
-            </thead>
             <tbody>
-               <tr><td>Trigger Area</td><td>{{ item.trigger_area }}</td></tr>
-               <tr><td>Scope</td><td>{{ item.scope }}</td></tr>
-               <tr><td>Owner</td><td>{{ item.qr_owner }}</td></tr>
+               <tr><td><strong>Trigger Area</strong></td><td>{{ item.trigger_area || 'N/A' }}</td></tr>
+               <tr><td><strong>Scope</strong></td><td>{{ item.scope || 'N/A' }}</td></tr>
+               <tr><td><strong>Owner</strong></td><td>{{ item.qr_owner || 'N/A' }}</td></tr>
             </tbody>
          </table>
       </div>
@@ -113,74 +141,108 @@
 
     <!-- Conclusion -->
     <div class="card-item">
-      <div class="card-item-header">Conclusion</div>
+      <div class="card-item-header">
+         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+         Conclusion
+      </div>
       <div class="card-item-body">{{ item.conclusion || 'N/A' }}</div>
     </div>
 
     <!-- Result -->
     <div class="card-item">
-      <div class="card-item-header">Result</div>
+      <div class="card-item-header">
+         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+         Result
+      </div>
       <div class="card-item-body">{{ item.result || 'N/A' }}</div>
     </div>
 
     <!-- Picture -->
     <div class="card-item">
-      <div class="card-item-header">Picture</div>
+      <div class="card-item-header">
+         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+         Picture
+      </div>
       <div class="card-item-body" style="display:flex; justify-content:center; align-items:center;">
-         <img v-if="item.phenomenon_image" :src="item.phenomenon_image" style="max-width:100%; max-height: 100%; object-fit:contain;" alt="Evidence Picture">
-         <div v-else class="pict-box" style="width:100%;">Click Here To See The Picture</div>
+         <img v-if="item.phenomenon_image && (item.phenomenon_image.startsWith('/') || item.phenomenon_image.startsWith('http'))" :src="item.phenomenon_image" style="max-width:100%; max-height: 180px; object-fit:contain; border-radius:4px;" alt="Evidence Picture">
+         <div v-else style="color: #6c757d; font-style: italic; text-align:center; padding: 2rem; border: 2px dashed #ced4da; border-radius:4px; width:100%;">No Picture Uploaded</div>
       </div>
     </div>
 
-    <!-- Empty Cell for Spacing if required -->
-    <div></div>
-
-    <!-- QR Result (Span 1 or absolute bottoms) -->
+    <!-- QR Result -->
     <div class="card-item">
-      <div class="card-item-header">QR Result</div>
-      <div class="card-item-body" style="display:flex; justify-content:center; align-items:center; font-size: 1.5rem; font-weight:bold; color: #198754;">
-         {{ item.qr_status }}
+      <div class="card-item-header">
+         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+         QR Result
       </div>
-    </div>
-
-    <!-- EP Direction 1 -->
-    <div class="card-item grid-span-2">
-      <div class="card-item-header">EP Direction 1</div>
       <div class="card-item-body">
-         <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.5rem;">
-            <div><strong>Reliability:</strong> {{ item.ep1_reliability }}</div>
-            <div><strong>Cost:</strong> {{ item.ep1_cost }}</div>
-            <div><strong>Applicability:</strong> {{ item.ep1_applicability }}</div>
-            <div><strong>RACES:</strong> {{ item.ep1_races }}</div>
+         <div class="status-giant" :class="item.qr_status.toLowerCase()">
+            {{ item.qr_status }}
          </div>
-         <p style="margin-top:0.5rem;">{{ item.ep_direction_1 || 'N/A' }}</p>
       </div>
     </div>
 
     <!-- Next Step -->
     <div class="card-item">
-      <div class="card-item-header">Next Step</div>
-      <div class="card-item-body">
-         <div style="font-size: 1.25rem; font-weight:bold; color: #0d6efd; text-align:center; padding-top: 1.5rem;">NA</div>
+      <div class="card-item-header">
+         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+         Next Step
+      </div>
+      <div class="card-item-body" style="justify-content:center; align-items:center; font-size: 1.5rem; font-weight:bold; color: #004085;">
+         NA
       </div>
     </div>
 
+    <!-- EP Direction 1 -->
+    <div class="card-item grid-span-2">
+      <div class="card-item-header">
+         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+         EP Direction 1
+      </div>
+      <div class="card-item-body">
+         <table class="inner-table">
+            <tbody>
+               <tr>
+                  <td><strong>Reliability</strong></td><td>{{ item.ep1_reliability || 'N/A' }}</td>
+                  <td><strong>Cost</strong></td><td>{{ item.ep1_cost || 'N/A' }}</td>
+               </tr>
+               <tr>
+                  <td><strong>Applicability</strong></td><td>{{ item.ep1_applicability || 'N/A' }}</td>
+                  <td><strong>RACES</strong></td><td>{{ item.ep1_races || 'N/A' }}</td>
+               </tr>
+            </tbody>
+         </table>
+         <p style="margin-top:0.75rem; border-top:1px solid #dee2e6; padding-top:0.5rem; color:#495057;">{{ item.ep_direction_1 || 'N/A' }}</p>
+      </div>
+    </div>
+
+    <div></div> <!-- Spacing grid item spacer -->
+
     <!-- EP Direction 2 -->
     <div class="card-item grid-span-2">
-      <div class="card-item-header">EP Direction 2</div>
+      <div class="card-item-header">
+         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+         EP Direction 2
+      </div>
       <div class="card-item-body">
-         <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.5rem;">
-            <div><strong>Reliability:</strong> {{ item.ep2_reliability }}</div>
-            <div><strong>Cost:</strong> {{ item.ep2_cost }}</div>
-            <div><strong>Applicability:</strong> {{ item.ep2_applicability }}</div>
-            <div><strong>RACES:</strong> {{ item.ep2_races }}</div>
-         </div>
-         <p style="margin-top:0.5rem;">{{ item.ep_direction_2 || 'N/A' }}</p>
+         <table class="inner-table">
+            <tbody>
+               <tr>
+                  <td><strong>Reliability</strong></td><td>{{ item.ep2_reliability || 'N/A' }}</td>
+                  <td><strong>Cost</strong></td><td>{{ item.ep2_cost || 'N/A' }}</td>
+               </tr>
+               <tr>
+                  <td><strong>Applicability</strong></td><td>{{ item.ep2_applicability || 'N/A' }}</td>
+                  <td><strong>RACES</strong></td><td>{{ item.ep2_races || 'N/A' }}</td>
+               </tr>
+            </tbody>
+         </table>
+         <p style="margin-top:0.75rem; border-top:1px solid #dee2e6; padding-top:0.5rem; color:#495057;">{{ item.ep_direction_2 || 'N/A' }}</p>
       </div>
     </div>
 
   </div>
 
-  <script src="js/detail.js"></script> <!-- Reusing detail.js logic -->
+  <script src="js/detail.js"></script>
 </body>
 </html>

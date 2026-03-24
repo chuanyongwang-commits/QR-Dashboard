@@ -11,11 +11,14 @@ createApp({
         const currentPage = ref(1);
         const pageSize = 15;
         const sortAsc = ref(false);
-        const currentSortBy = ref('qr_number'); // Default sort
+        const currentSortBy = ref('qr_number'); 
 
         // Modal for Adding Case
         const isModalOpen = ref(false);
         const newCase = ref({ title: '', trigger_area: '', scope: '', trigger_date: '', qr_owner: '', qr_status: 'Ongoing' });
+
+        // Lightbox for Picture preview
+        const lightbox = ref({ active: false, url: '' });
 
         onMounted(() => {
             fetch('/api/filters')
@@ -48,15 +51,14 @@ createApp({
 
         function changeSort(column) {
              if (currentSortBy.value === column) {
-                  sortAsc.value = !sortAsc.value; // Toggle direction
+                  sortAsc.value = !sortAsc.value;
              } else {
                   currentSortBy.value = column;
-                  sortAsc.value = false; // Default to Descending or Ascending on new column? Let's fix ASC.
+                  sortAsc.value = false; 
              }
              loadData();
         }
 
-        // Watching filters for re-fetching
         watch(filters, () => {
              currentPage.value = 1;
              loadData();
@@ -76,6 +78,10 @@ createApp({
         function prevPage() { if (currentPage.value > 1) currentPage.value--; }
         function nextPage() { if (currentPage.value < maxPage.value) currentPage.value++; }
 
+        function openLightbox(url) {
+             lightbox.value = { active: true, url: url };
+        }
+
         function submitNewCase() {
              fetch('/api/cases', {
                  method: 'POST',
@@ -88,7 +94,7 @@ createApp({
                        alert('Case added successfully with QR Support ID: #' + data.qr_number);
                        isModalOpen.value = false;
                        newCase.value = { title: '', trigger_area: '', scope: '', trigger_date: '', qr_owner: '', qr_status: 'Ongoing' };
-                       loadData(); // Reload list
+                       loadData();
                   } else {
                        alert('Error: ' + JSON.stringify(data));
                   }
@@ -106,7 +112,8 @@ createApp({
             uniqueAreas, uniqueScopes, uniqueOwners,
             paginatedData, maxPage, paginationStart, paginationEnd,
             prevPage, nextPage, changeSort,
-            isModalOpen, newCase, submitNewCase
+            isModalOpen, newCase, submitNewCase,
+            lightbox, openLightbox
         };
     }
 }).mount('#app');

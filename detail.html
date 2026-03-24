@@ -37,7 +37,8 @@
       </a>
       <div style="display: flex; gap: 0.5rem; align-items:center;">
           <h1 class="content-title" style="margin-right: 1rem;">QR Detail <span v-if="item">#{{ item.qr_number }}</span></h1>
-          <button v-if="item && item.qr_status === 'Ongoing'" class="btn" @click="isEditMode = !isEditMode">
+          <!-- Allow Edit on ALL status now if required, checking user statement -->
+          <button v-if="item" class="btn" @click="toggleEdit">
              {{ isEditMode ? 'Cancel Edit' : 'Edit' }}
           </button>
           <button v-if="isEditMode" class="btn btn-primary" @click="saveChanges">Save</button>
@@ -75,39 +76,78 @@
                   <span v-else class="badge" :class="item.qr_status === 'Completed' ? 'badge-completed' : (item.qr_status === 'Ongoing' ? 'badge-ongoing' : 'badge-failed')">{{ item.qr_status }}</span>
                </div>
             </div>
-            <div class="detail-row"><span class="detail-label">Trigger Area</span><span class="detail-value">{{ item.trigger_area || 'N/A' }}</span></div>
-            <div class="detail-row"><span class="detail-label">Scope</span><span class="detail-value">{{ item.scope || 'N/A' }}</span></div>
-            <div class="detail-row"><span class="detail-label">Failure Code</span><span class="detail-value">{{ item.failure_code || 'N/A' }}</span></div>
-            <div class="detail-row"><span class="detail-label">QR Owner</span><span class="detail-value">{{ item.qr_owner || 'N/A' }}</span></div>
-            <div class="detail-row"><span class="detail-label">Severity</span><span class="detail-value">{{ item.problem_severity || 'N/A' }}</span></div>
+            
+            <div class="detail-row">
+               <span class="detail-label">Trigger Area</span>
+               <div class="detail-value">
+                  <input v-if="isEditMode" type="text" v-model="item.trigger_area" class="form-input">
+                  <span v-else>{{ item.trigger_area || 'N/A' }}</span>
+               </div>
+            </div>
+            <div class="detail-row">
+               <span class="detail-label">Scope</span>
+               <div class="detail-value">
+                  <input v-if="isEditMode" type="text" v-model="item.scope" class="form-input">
+                  <span v-else>{{ item.scope || 'N/A' }}</span>
+               </div>
+            </div>
+            <div class="detail-row">
+               <span class="detail-label">Failure Code</span>
+               <div class="detail-value">
+                  <input v-if="isEditMode" type="text" v-model="item.failure_code" class="form-input">
+                  <span v-else>{{ item.failure_code || 'N/A' }}</span>
+               </div>
+            </div>
+            <div class="detail-row">
+               <span class="detail-label">QR Owner</span>
+               <div class="detail-value">
+                  <input v-if="isEditMode" type="text" v-model="item.qr_owner" class="form-input">
+                  <span v-else>{{ item.qr_owner || 'N/A' }}</span>
+               </div>
+            </div>
+            <div class="detail-row">
+               <span class="detail-label">Severity</span>
+               <div class="detail-value">
+                  <input v-if="isEditMode" type="text" v-model="item.problem_severity" class="form-input">
+                  <span v-else>{{ item.problem_severity || 'N/A' }}</span>
+               </div>
+            </div>
          </div>
 
          <!-- Phenomenon -->
          <div class="detail-section">
             <div class="detail-title">Problem Phenomenon 问题现象</div>
             <div class="detail-value" style="margin-bottom: 1rem;">
-               <textarea v-if="isEditMode" v-model="item.phenomenon" class="form-input" rows="4"></textarea>
-               <p v-else style="white-space: pre-line;">{{ item.phenomenon && item.phenomenon.startsWith('{') ? 'See details and images attached above.' : (item.phenomenon || 'N/A') }}</p>
+               <textarea v-if="isEditMode" v-model="item.phenomenon" class="form-input" style="height: 120px;"></textarea>
+               <p v-else style="white-space: pre-line;">{{ item.phenomenon || 'N/A' }}</p>
             </div>
-            <img v-if="item.phenomenon_image" :src="item.phenomenon_image" class="phenom-image" @click="openModal" alt="Phenomenon Evidence">
+            
+            <div v-if="isEditMode" style="margin-bottom: 0.5rem;">
+               <label class="btn btn-sm" style="display:inline-block; cursor:pointer; background:#f1f3f5; color:#495057; font-size:0.75rem; padding:0.35rem 0.6rem; border:1px solid #dee2e6; border-radius:4px;">
+                  📷 Upload Image
+                  <input type="file" @change="uploadImage" style="display:none;" accept="image/*">
+               </label>
+            </div>
+            
+            <img v-if="item.phenomenon_image" :src="item.phenomenon_image" class="phenom-image" @click="openModal" alt="Phenomenon Evidence" style="max-width:240px; border:1px solid #dee2e6; border-radius:4px;">
          </div>
 
          <!-- Measures -->
          <div class="detail-section">
             <div class="detail-title">Measures & Result 措施与结果</div>
             <div class="detail-row" style="flex-direction:column; gap:0.25rem; margin-bottom: 1rem;">
-               <span class="detail-label">Action 措施</span>
-               <textarea v-if="isEditMode" v-model="item.action" class="form-input" rows="3"></textarea>
+               <span class="detail-label" style="flex: none; margin-bottom: 0.25rem;">Action 措施</span>
+               <textarea v-if="isEditMode" v-model="item.action" class="form-input" style="height: 120px;"></textarea>
                <div v-else class="detail-value" style="white-space: pre-line; background: #f8f9fa; padding: 0.75rem; border-radius: 4px;">{{ item.action || 'N/A' }}</div>
             </div>
             <div class="detail-row" style="flex-direction:column; gap:0.25rem; margin-bottom: 1rem;">
-               <span class="detail-label">Result 结果</span>
-               <textarea v-if="isEditMode" v-model="item.result" class="form-input" rows="3"></textarea>
+               <span class="detail-label" style="flex: none; margin-bottom: 0.25rem;">Result 结果</span>
+               <textarea v-if="isEditMode" v-model="item.result" class="form-input" style="height: 120px;"></textarea>
                <div v-else class="detail-value" style="white-space: pre-line; background: #f8f9fa; padding: 0.75rem; border-radius: 4px;">{{ item.result || 'N/A' }}</div>
             </div>
             <div class="detail-row" style="flex-direction:column; gap:0.25rem;">
-               <span class="detail-label">Conclusion 结论</span>
-               <textarea v-if="isEditMode" v-model="item.conclusion" class="form-input" rows="3"></textarea>
+               <span class="detail-label" style="flex: none; margin-bottom: 0.25rem;">Conclusion 结论</span>
+               <textarea v-if="isEditMode" v-model="item.conclusion" class="form-input" style="height: 120px;"></textarea>
                <div v-else class="detail-value" style="white-space: pre-line; background: #f8f9fa; padding: 0.75rem; border-radius: 4px;">{{ item.conclusion || 'N/A' }}</div>
             </div>
          </div>
@@ -117,8 +157,9 @@
       <div class="column">
          <!-- Timeline -->
          <div class="detail-section">
-            <div class="detail-title">Timeline 时间线</div>
-            <div class="timeline">
+            <div class="detail-title">Timeline 时间线 (Logs)</div>
+            <div class="timeline" style="max-height: 480px; overflow-y: auto;">
+               <!-- Static Initial Trigger -->
                <div class="timeline-item">
                   <div class="timeline-dot"></div>
                   <div class="timeline-content">
@@ -126,31 +167,26 @@
                      <div class="timeline-desc">QR Case Triggered 触发日期</div>
                   </div>
                </div>
-               <div v-if="item.action" class="timeline-item">
+               
+               <!-- Dynamic Automated Diffs Logs -->
+               <div v-for="log in item.history" :key="log.changed_at" class="timeline-item">
                   <div class="timeline-dot" style="background: var(--warning-color);"></div>
                   <div class="timeline-content">
-                     <div class="timeline-desc">Actions Taken & Verification 采取措施</div>
-                  </div>
-               </div>
-               <div v-if="item.close_date && item.close_date !== ''" class="timeline-item">
-                  <div class="timeline-dot" style="background: var(--success-color);"></div>
-                  <div class="timeline-content">
-                     <div class="timeline-date">Close Date: {{ item.close_date }}</div>
-                     <div class="timeline-desc">QR Case Completed / Closed 结束关闭</div>
-                  </div>
-               </div>
-               <div v-if="item.qr_status === 'Failed' && !item.close_date" class="timeline-item">
-                  <div class="timeline-dot" style="background: var(--danger-color);"></div>
-                  <div class="timeline-content">
-                     <div class="timeline-desc">QR Case Failed / Stalled 无法关闭</div>
+                     <div class="timeline-date" style="font-size: 0.75rem; font-weight:normal; color:var(--text-secondary);">{{ log.changed_at }}</div>
+                     <div class="timeline-desc" style="font-size: 0.825rem;">
+                        Updated <strong>{{ log.field_name }}</strong>: 
+                        <span style="color:#d63384; text-decoration:line-through; font-size: 0.75rem;">{{ log.old_value || 'None' }}</span> → 
+                        <span style="color:var(--success-color); font-weight:600;">{{ log.new_value || 'None' }}</span>
+                      </div>
                   </div>
                </div>
             </div>
          </div>
 
          <!-- EP Directions -->
-         <div class="detail-section">
-            <div class="detail-title">EP Direction 次步计划</div>
+         <div class="detail-section" style="opacity: 0.5; pointer-events:none;" title="Standard Detail viewing Only">
+            <!-- Non editable EP directions preserved for display board purely -->
+            <div class="detail-title">EP Direction 次步计划 (View-only)</div>
             <div class="tabs-container">
                <div class="tabs-header">
                   <button v-for="n in [1,2,3]" :key="n" class="tab-btn" :class="{ active: selectedTab === n }" @click="selectedTab = n">Direction {{ n }}</button>
