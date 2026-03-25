@@ -85,19 +85,21 @@
             <th @click="changeSort('scope')" style="cursor:pointer;">{{ t('scope') }} <span v-if="currentSortBy === 'scope'">{{ sortAsc ? '↑' : '↓' }}</span></th>
             <th @click="changeSort('title')" style="cursor:pointer;">{{ t('title') }} <span v-if="currentSortBy === 'title'">{{ sortAsc ? '↑' : '↓' }}</span></th>
             <th @click="changeSort('qr_status')" style="cursor:pointer;">Status <span v-if="currentSortBy === 'qr_status'">{{ sortAsc ? '↑' : '↓' }}</span></th>
-            <th @click="changeSort('owner')" style="cursor:pointer;">{{ t('owner') }} <span v-if="currentSortBy === 'qr_owner'">{{ sortAsc ? '↑' : '↓' }}</span></th>
+            <th @click="changeSort('trigger_date')" style="cursor:pointer;">{{ t('triggerDate') }} <span v-if="currentSortBy === 'trigger_date'">{{ sortAsc ? '↑' : '↓' }}</span></th>
+            <th @click="changeSort('owner')" style="cursor:pointer;">{{ t('owner') }} <span v-if="currentSortBy === 'owner'">{{ sortAsc ? '↑' : '↓' }}</span></th>
             <th>{{ t("action") }}</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="paginatedData.length === 0">
-             <td colspan="6" style="text-align:center;">{{ t('noMatch') }}</td>
+             <td colspan="7" style="text-align:center;">{{ t('noMatch') }}</td>
           </tr>
           <tr v-for="item in paginatedData" :key="item.qr_number">
              <td><a :href="'detail.html?id=' + item.qr_number" style="color: var(--primary-color); text-decoration:none; font-weight:600;">#{{ item.qr_number }}</a></td>
              <td>{{ item.scope }}</td>
              <td>{{ item.title }}</td>
              <td><div class="badge" :class="item.qr_status === 'Completed' ? 'badge-completed' : (item.qr_status === 'Ongoing' ? 'badge-ongoing' : 'badge-failed')">{{ item.qr_status }}</div></td>
+             <td>{{ item.trigger_date }}</td>
              <td>{{ item.qr_owner || 'N/A' }}</td>
              <td>
                  <div style="display:flex; gap: 0.5rem; align-items:center;">
